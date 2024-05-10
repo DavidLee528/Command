@@ -1,4 +1,5 @@
 from typing import List
+from logging import basicConfig, getLogger, INFO, Logger
 
 config: dict = {
     # project #1: torch
@@ -43,6 +44,13 @@ config: dict = {
     }
 }
 
+def init_logger(logger_name: str = "lab4") -> Logger:
+    basicConfig(level = INFO, format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    global logger
+    logger = getLogger("AutoTest")
+    logger.info("Program start.")
+    return logger
+
 def check_config(config: dict) -> bool:
     """Check if errors exist in config variable
 
@@ -52,6 +60,8 @@ def check_config(config: dict) -> bool:
     Returns:
         bool: true if no errors detected
     """
+    logger.info("Start checking config")
+
     # checkpoint #1: if the binding argument list size equal
     for project, project_config in config.items():
         for script, script_config in project_config.items():
@@ -61,6 +71,7 @@ def check_config(config: dict) -> bool:
                 for check_item in binding_args:
                     len_list.append(len(script_config['template_parameters'].get(check_item, [])))
                 if len(set(len_list)) != 1:
+                    logger.error("Config check failed, wrong binding.")
                     return False
                 
     # checkpoint #2: template parameter integrity
@@ -71,8 +82,10 @@ def check_config(config: dict) -> bool:
                 template_params = script_config.get("template_parameters", {})
                 for param in template_params:
                     if f"#{param}#" not in template:
+                        logger.error("Config check failed, wrong template parameters.")
                         return False
-
+                    
+    logger.info("Config check passed.")
     return True
 
 def construct_command(config: dict) -> List[str]:
@@ -87,3 +100,5 @@ def construct_command(config: dict) -> List[str]:
     res: List[str] = []
 
     return res
+
+logger: Logger = init_logger()
