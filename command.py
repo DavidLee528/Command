@@ -46,23 +46,34 @@ config: dict = {
 def check_config(config: dict) -> bool:
     """Check if errors exist in config variable
 
-    vim
-    Copy
     Args:
-        config (dict): config dict variable to be check
+        config (dict): config dict variable to be checked
 
     Returns:
         bool: true if no errors detected
     """
-    res: bool = False
-
     # checkpoint #1: if the binding argument list size equal
-    # add your code here
-
+    for project, project_config in config.items():
+        for script, script_config in project_config.items():
+            if script != "base":
+                binding_args: List[str] = script_config.get("binding", [])
+                len_list: List[int] = []
+                for check_item in binding_args:
+                    len_list.append(len(script_config['template_parameters'].get(check_item, [])))
+                if len(set(len_list)) != 1:
+                    return False
+                
     # checkpoint #2: template parameter integrity
-    # add your code here
+    for project, project_config in config.items():
+        for script, script_config in project_config.items():
+            if script != "base":
+                template = script_config.get("template", "")
+                template_params = script_config.get("template_parameters", {})
+                for param in template_params:
+                    if f"#{param}#" not in template:
+                        return False
 
-    return res
+    return True
 
 def construct_command(config: dict) -> List[str]:
     """Construct command list from config variable
