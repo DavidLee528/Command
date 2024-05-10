@@ -20,3 +20,16 @@ def check_config(config: dict) -> bool:
     # add your code here
 
     return res
+
+def construct_command(config: dict) -> List[str]:
+    """Construct command list from config variable
+
+    Args:
+        config (dict): config variable
+
+    Returns:
+        List[str]: A list of command string to be execute
+    """
+    res: List[str] = []
+
+    return res
