@@ -1,4 +1,4 @@
-import itertools
+import re
 from typing import List, Dict
 from logging import basicConfig, getLogger, INFO, Logger
 
@@ -12,7 +12,7 @@ config: dict = {
             # command template to execute script
             # content within ## should be found in `template_parameters`
             "template": "#python# #base##path# \
-                            --networks #network# \
+                            --network #network# \
                             --model_path #model_path# \
                             --adv_data_path #base#attack/attack_demo/#network#/#attack#/adv_data.npy \
                             --clean_data_path #base#attack/attack_demo/#network#/#attack#/clean_data.npy \
@@ -134,8 +134,12 @@ def construct_command(config: Dict) -> List[str]:
                         command = command.replace("#model_path#", model_path)
                         command = command.replace("#attack#", attack)
 
+                        # transform consecutive spaces to one space
+                        command = re.sub(r'\s+', ' ', command)
+
                         res.append(command)
 
+    logger.info("Finish constructing commands.")
     return res
 
 logger: Logger = init_logger()
