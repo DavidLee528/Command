@@ -1,5 +1,6 @@
 import command
-from typing import List
+import json
+from typing import List, Dict
 from execution import execute
 
 if __name__ == "__main__":
@@ -7,10 +8,12 @@ if __name__ == "__main__":
     passed: bool = True
 
     if passed:
-        command_list: List[str] = command.construct_command(config = command.config)
+        command: Dict[dict, list] = command.construct_command(config = command.config)
 
-        with open("commands.txt", "w") as f:
-            for command in command_list:
-                f.write(command + "\n")
-        
-        execute(command_list = command_list, output_dir = "./output", max_workers = 6)
+        with open("commands.json", "w") as f:
+            json.dump(command, f, indent=4)
+
+        for project in command.keys():
+            for script in command[project].keys():
+                output_dir: str = f"./output/{project}/{script}"
+                execute(command_list = command[project][script], output_dir = output_dir, max_workers = 4)
