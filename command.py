@@ -2,6 +2,7 @@ import re
 from typing import List, Dict
 import logging
 import colorlog
+import hashlib
 
 config: dict = {
     # project #1: torch
@@ -135,6 +136,10 @@ def init_logger(logger_name: str = "AutoTest") -> logging.Logger:
     logger.info("Program start.")
     return logger
 
+def generate_short_hash(input_string):
+    hash_object = hashlib.md5(input_string.encode())
+    return hash_object.hexdigest()[:8]
+
 def check_config(config: dict) -> bool:
     """Check if errors exist in config variable
 
@@ -210,7 +215,10 @@ def construct_command(config: Dict) -> Dict[dict, list]:
                         # transform consecutive spaces to one space
                         command = re.sub(r'\s+', ' ', command)
 
-                        res[project][script].append(command)
+                        # 8-digits short hash value for filename
+                        hash: str = generate_short_hash(command)
+
+                        res[project][script].append({'command': command, 'tag': hash})
 
     logger.info("Finish constructing commands.")
     return res
