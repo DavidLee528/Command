@@ -1,15 +1,14 @@
-from typing import List
+import itertools
+from typing import List, Dict
 from logging import basicConfig, getLogger, INFO, Logger
 
 config: dict = {
     # project #1: torch
     "torch": {
         # project base directory
-        "base": "/home/topsec/code_formal/code/drills/torch/", 
-
+        "base": "/home/topsec/code_formal/code/drills/torch/",
         # script #1: attack_test
         "attack_test": {
-
             # command template to execute script
             # content within ## should be found in `template_parameters`
             "template": "#python# #base##path# \
@@ -17,30 +16,44 @@ config: dict = {
                             --model_path #model_path# \
                             --adv_data_path #base#attack/attack_demo/#network#/#attack#/adv_data.npy \
                             --clean_data_path #base#attack/attack_demo/#network#/#attack#/clean_data.npy \
-                            --clean_label_path #base#attack/attack_demo/#network#/#attack#/label.npy", 
-
+                            --clean_label_path #base#attack/attack_demo/#network#/#attack#/label.npy",
             # parameters dict for template
             "template_parameters": {
                 # Absolute path of python interpreter
-                "python": ["/home/topsec/anaconda3/envs/ai_server/bin/python"], 
-
+                "python": ["/home/topsec/anaconda3/envs/ai_server/bin/python"],
                 # relative path of script under project base directory
-                "path": ["attack_test.py"], 
-
+                "path": ["attack_test.py"],
                 # argument pools
-                "network": ["vgg19", "resnet18", "googlenet", "mobilenet"],
-                "attack": ["bim", "cw", "deepfool", "difgsm", "fgsm", "mifgsm", "pgd", "tifgsm"], 
-                "model_path": [
-                    "/home/topsec/code_formal/code/drills/torch/normal_train/normal_trained_models/vgg19/best_acc.pth", 
-                    "/home/topsec/code_formal/code/drills/torch/normal_train/normal_trained_models/resnet18/best_acc.pth",
-                    "/home/topsec/code_formal/code/drills/torch/normal_train/normal_trained_models/googlenet/best_acc.pth",
-                    "/home/topsec/code_formal/code/drills/torch/normal_train/normal_trained_models/mobilenet/best_acc.pth"
+                "network, model_path": [
+                    [
+                        "vgg19",
+                        "/home/topsec/code_formal/code/drills/torch/normal_train/normal_trained_models/vgg19/best_acc.pth",
+                    ],
+                    [
+                        "resnet18",
+                        "/home/topsec/code_formal/code/drills/torch/normal_train/normal_trained_models/resnet18/best_acc.pth",
+                    ],
+                    [
+                        "googlenet",
+                        "/home/topsec/code_formal/code/drills/torch/normal_train/normal_trained_models/googlenet/best_acc.pth",
+                    ],
+                    [
+                        "mobilenet",
+                        "/home/topsec/code_formal/code/drills/torch/normal_train/normal_trained_models/mobilenet/best_acc.pth",
+                    ],
                 ],
-            }, 
-
-            # argument binding config
-            "binding": ["network", "model_path"]
-        }
+                "attack": [
+                    "bim",
+                    "cw",
+                    "deepfool",
+                    "difgsm",
+                    "fgsm",
+                    "mifgsm",
+                    "pgd",
+                    "tifgsm",
+                ],
+            },
+        },
     }
 }
 
@@ -88,7 +101,7 @@ def check_config(config: dict) -> bool:
     logger.info("Config check passed.")
     return True
 
-def construct_command(config: dict) -> List[str]:
+def construct_command(config: Dict) -> List[str]:
     """Construct command list from config variable
 
     Args:
@@ -98,6 +111,30 @@ def construct_command(config: dict) -> List[str]:
         List[str]: A list of command string to be execute
     """
     res: List[str] = []
+
+    for project, project_config in config.items():
+        for script, script_config in project_config.items():
+            if script!= "base":
+                template = script_config["template"]
+                template_parameters = script_config["template_parameters"]
+
+                # Extract parameters from template_parameters
+                python_interpreter = template_parameters["python"][0]
+                script_path = template_parameters["path"][0]
+                network_model_path_pairs = template_parameters["network, model_path"]
+                attacks = template_parameters["attack"]
+
+                # Generate commands for each combination of network, model_path, and attack
+                for network, model_path in network_model_path_pairs:
+                    for attack in attacks:
+                        command = template.replace("#python#", python_interpreter)
+                        command = command.replace("#base#", project_config["base"])
+                        command = command.replace("#path#", script_path)
+                        command = command.replace("#network#", network)
+                        command = command.replace("#model_path#", model_path)
+                        command = command.replace("#attack#", attack)
+
+                        res.append(command)
 
     return res
 
